@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D8E327D82E83A4D800E36186 /* MIDIKit in Frameworks */ = {isa = PBXBuildFile; productRef = D8E327D72E83A4D800E36186 /* MIDIKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		D8E327BA2E83A47C00E36186 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D8E327D82E83A4D800E36186 /* MIDIKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = RenecitoPOC;
 			packageProductDependencies = (
+				D8E327D72E83A4D800E36186 /* MIDIKit */,
 			);
 			productName = RenecitoPOC;
 			productReference = D8E327AC2E83A47B00E36186 /* RenecitoPOC.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = D8E327A32E83A47B00E36186;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D8E327D62E83A4D800E36186 /* XCRemoteSwiftPackageReference "MIDIKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D8E327AD2E83A47B00E36186 /* Products */;
 			projectDirPath = "";
@@ -564,6 +573,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D8E327D62E83A4D800E36186 /* XCRemoteSwiftPackageReference "MIDIKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/orchetect/MIDIKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.10.5;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D8E327D72E83A4D800E36186 /* MIDIKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D8E327D62E83A4D800E36186 /* XCRemoteSwiftPackageReference "MIDIKit" */;
+			productName = MIDIKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D8E327A42E83A47B00E36186 /* Project object */;
 }
