@@ -25,6 +25,12 @@ enum MidiSequencerOutput {
     }
 }
 
+// TODO: eventually when we create the UI for sequencer, I will probably need to create an ObservableMidiSequencer that
+// has all the state that the ui reacts to. Then it will play the sequencer using methods on the MidiSequencer.
+// I wanted to do it this way for testability and separation of concerns.
+
+// TODO: figure out how to represent a concept of tempo so that transitions can be adapted to musical tempos
+
 class MidiSequencer: Sequencer {
     private let midiManager: ObservableMIDIManager
 
