@@ -19,3 +19,15 @@ extension MIDIIdentifier: @retroactive RawRepresentable {
         Int(self)
     }
 }
+
+extension UInt7 {
+    public static func random() -> Self {
+        UInt7(UInt.random(in: 0 ... 127))
+    }
+    
+    public static func random(in range: ClosedRange<Self>) -> Self {
+        let lb = UInt(range.lowerBound)
+        let ub = UInt(range.upperBound)
+        return UInt7(UInt.random(in: lb ... ub))
+    }
+}

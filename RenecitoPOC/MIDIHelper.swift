@@ -1,16 +1,13 @@
-//
-//  MIDIHelper.swift
-//  MIDIKit • https://github.com/orchetect/MIDIKit
-//  © 2021-2025 Steffan Andrews • Licensed under MIT License
-//
-
+import AsyncAlgorithms
 import MIDIKitIO
 import SwiftUI
 
 /// Receiving MIDI happens on an asynchronous background thread. That means it cannot update
 /// SwiftUI view state directly. Therefore, we need a helper class marked with `@Observable`
 /// which contains properties that SwiftUI can use to update views.
+
 @Observable @MainActor final class MIDIHelper {
+    private let channel = AsyncChannel<MIDIEvent>()
     private weak var midiManager: ObservableMIDIManager?
     
     public private(set) var receivedEvents: [MIDIEvent] = []
@@ -21,20 +18,6 @@ import SwiftUI
     
     public func setup(midiManager: ObservableMIDIManager) {
         self.midiManager = midiManager
-        
-        // TODO: I don't think I need this since I got rid of virtual endpoints
-        // update a local property in response to when
-        // MIDI devices/endpoints change in system
-//        midiManager.notificationHandler = { [weak self] notification in
-//            Task { @MainActor in
-//                switch notification {
-//                case .added, .removed, .propertyChanged:
-//                    self?.updateVirtualsExist()
-//                default:
-//                    break
-//                }
-//            }
-//        }
         
         do {
             print("Starting MIDI services.")
@@ -66,7 +49,6 @@ import SwiftUI
     // MARK: Common Event Receiver
     
     private func received(events: [MIDIEvent]) {
-        // TODO: Do I want to filter this in my use case?
         let events = filterActiveSensingAndClock
             ? events.filter(sysRealTime: .dropTypes([.activeSensing, .timingClock]))
             : events
@@ -75,6 +57,21 @@ import SwiftUI
         Task { @MainActor in
             self.receivedEvents.append(contentsOf: events)
         }
+        
+        Task {
+            for event in events {
+                await self.channel.send(event)
+            }
+        }
+    }
+    
+    // Each call returns a NEW independent iterator
+    nonisolated func subscribe() -> AsyncChannel<MIDIEvent> {
+        channel
+    }
+    
+    func finish() async {
+        channel.finish()
     }
     
     // MARK: - MIDI Input Connection
