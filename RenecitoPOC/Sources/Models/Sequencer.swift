@@ -10,14 +10,18 @@ import Foundation
 @Observable
 class Sequencer {
     private var midi: MIDIHelper
-    private var output1: Output1
+    private var xChannelTriggerOutput: SequencerTriggerOutput
+    private var xChannelValueOutput: SequencerValueOutput
     
     init(midi: MIDIHelper) {
         self.midi = midi
-        self.output1 = Output1(midi: midi)
+        // TODO: refactor to use protocols and factory methods
+        self.xChannelTriggerOutput = SequencerOutput.xChannelTriggerOutput(midi: midi)
+        self.xChannelValueOutput = SequencerOutput.xChannelValueOutput(midi: midi)
     }
     
     func triggerXClock() async {
+        // TODO: implement sequencer state machine
         do {
             try await self.output1.sendTrigger()
         } catch {
