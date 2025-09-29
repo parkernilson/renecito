@@ -26,7 +26,7 @@ struct ContentView: View {
                 
                 endpointSelectionSection
                 
-                eventLogSection
+//                eventLogSection
             }
             .navigationBarTitle("Endpoint Pickers")
             
@@ -81,31 +81,6 @@ struct ContentView: View {
             .updatingOutputConnection(withTag: MIDIHelper.Tags.midiOut)
         }
     }
-    
-    @ViewBuilder
-    private var eventLogSection: some View {
-        @Bindable var midiHelper = midiHelper
-        
-        Section(header: Text("Received Events")) {
-            Toggle(
-                "Filter Active Sensing and Clock",
-                isOn: $midiHelper.filterActiveSensingAndClock
-            )
-            
-            let events = midiHelper.receivedEvents.reversed()
-            
-            // Since MIDIEvent doesn't conform to Identifiable (and won't ever), in a List
-            // or ForEach we need to either use an array index or a wrap MIDIEvent in a
-            // custom type that does conform to Identifiable. It's really up to your use
-            // case.
-            // Usually application interaction is driven by MIDI events and we aren't
-            // literally logging events, but this is for diagnostic purposes here.
-            List(events.indices, id: \.self) { index in
-                Text(events[index].description)
-                    .foregroundColor(color(for: events[index]))
-            }
-        }
-    }
 }
 
 extension ContentView {
@@ -116,14 +91,5 @@ extension ContentView {
     
     func sendToConnection(_ event: MIDIEvent) {
         try? midiHelper.midiOutputConnection?.send(event: event)
-    }
-    
-    func color(for event: MIDIEvent) -> Color? {
-        switch event {
-        case .noteOn: .green
-        case .noteOff: .red
-        case .cc: .orange
-        default: nil
-        }
     }
 }

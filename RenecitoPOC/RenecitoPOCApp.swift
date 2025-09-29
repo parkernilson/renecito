@@ -17,7 +17,8 @@ struct RenecitoPOCApp: App {
     )
     
     @State var midiHelper = MIDIHelper()
-    var sequencerManager: SequencerManager?
+    var sequencer: Sequencer?
+    //    var sequencerManager: SequencerManager?
     
     @AppStorage(MIDIHelper.PrefKeys.midiInID)
     var midiInSelectedID: MIDIIdentifier?
@@ -33,8 +34,10 @@ struct RenecitoPOCApp: App {
     
     init() {
         midiHelper.setup(midiManager: midiManager)
-        sequencerManager = SequencerManager(midi: midiHelper)
-        sequencerManager?.start()
+        sequencer = Sequencer(midi: midiHelper)
+        sequencer?.start()
+//        sequencerManager = SequencerManager(midi: midiHelper)
+//        sequencerManager?.start()
     }
     
     var body: some Scene {

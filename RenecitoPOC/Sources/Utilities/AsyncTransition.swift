@@ -11,8 +11,8 @@ struct AsyncTransition {
 
     static func transition(
         duration: TimeInterval = 1.0,
-        frameRate: Double = 60.0,
-        bezierCurve: BezierCurve = .easeInOut
+        frameRate: Double = 120.0,
+        bezierCurve: BezierCurve = .linear
     ) -> AsyncStream<Double> {
         AsyncStream { continuation in
             let task = Task {

@@ -1,9 +1,10 @@
 import MIDIKitIO
 import SwiftUI
 
+@Observable
 final class MIDIHelper {
     private weak var midiManager: MIDIManager?
-    private var listeners: [(MIDIEvent) -> Void] = []
+    private var listeners: [UUID: (MIDIEvent) -> Void] = [:]
     
     public init() { }
     
@@ -41,12 +42,18 @@ final class MIDIHelper {
     
     private func received(events: [MIDIEvent]) {
         for event in events {
-            listeners.forEach { $0(event) }
+            listeners.values.forEach { $0(event) }
         }
     }
 
-    public func addListener(_ listener: @escaping (MIDIEvent) -> Void) {
-        listeners.append(listener)
+    public func addListener(_ listener: @escaping (MIDIEvent) -> Void) -> UUID {
+        let id = UUID()
+        listeners[id] = listener
+        return id
+    }
+
+    public func removeListener(id: UUID) {
+        listeners.removeValue(forKey: id)
     }
     
     // MARK: - MIDI Input Connection

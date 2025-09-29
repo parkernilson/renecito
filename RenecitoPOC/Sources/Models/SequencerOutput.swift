@@ -11,6 +11,9 @@ import MIDIKitIO
 class SequencerOutput {
     private var midi: MIDIHelper
     private var channel: UInt4
+    private var lastValue: Double?
+    private var curValue: Double?
+    private var targetValue: Double?
     
     init(midi: MIDIHelper, channel: UInt4) {
         self.midi = midi
@@ -18,12 +21,18 @@ class SequencerOutput {
     }
 
     func sendValueSmooth(value: Double, duration: Double) async throws {
-        for await progress in AsyncTransition.transition(duration: duration) {
-            try await sendValue(value: progress)
+        if curValue == nil { curValue = 0 }
+        lastValue = curValue
+        targetValue = value
+        for await t in AsyncTransition.transition(duration: duration) {
+            Task {
+                try await sendValue(value: lastValue! + t * (targetValue! - lastValue!))
+            }
         }
     }
     
     func sendValue(value: Double) async throws {
+        curValue = value
         try self.midi.midiOutputConnection?.send(
             event: .cc(
                 1,
@@ -73,6 +82,10 @@ class SequencerValueOutput {
     
     func sendValue(value: Double) async throws {
         try await self.output.sendValue(value: value)
+    }
+    
+    func sendValueSmooth(value: Double, duration: Double) async throws {
+        try await self.output.sendValueSmooth(value: value, duration: duration)
     }
 }
 
