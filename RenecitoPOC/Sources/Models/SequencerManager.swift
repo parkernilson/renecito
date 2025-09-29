@@ -30,6 +30,7 @@ class SequencerManager {
                 // Wait for all tasks to complete (or be cancelled)
                 for await _ in group {
                     if Task.isCancelled {
+                        group.cancelAll()
                         break
                     }
                 }
