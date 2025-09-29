@@ -5,8 +5,35 @@ import SwiftUI
 /// Receiving MIDI happens on an asynchronous background thread. That means it cannot update
 /// SwiftUI view state directly. Therefore, we need a helper class marked with `@Observable`
 /// which contains properties that SwiftUI can use to update views.
+actor MIDIBroadcaster {
+    private var continuations: [ObjectIdentifier: AsyncStream<MIDIEvent>.Continuation] = [:]
+
+    func addSubscriber(_ continuation: AsyncStream<MIDIEvent>.Continuation) -> ObjectIdentifier {
+        let id = ObjectIdentifier(continuation as AnyObject)
+        continuations[id] = continuation
+        return id
+    }
+
+    func removeSubscriber(withId id: ObjectIdentifier) {
+        continuations.removeValue(forKey: id)
+    }
+
+    func broadcast(_ event: MIDIEvent) {
+        for continuation in continuations.values {
+            continuation.yield(event)
+        }
+    }
+
+    func finishAll() {
+        for continuation in continuations.values {
+            continuation.finish()
+        }
+        continuations.removeAll()
+    }
+}
+
 @Observable @MainActor final class MIDIHelper {
-    private let channel = AsyncChannel<MIDIEvent>()
+    private let broadcaster = MIDIBroadcaster()
     private weak var midiManager: ObservableMIDIManager?
     private let maxEvents = 1000
 
@@ -68,18 +95,31 @@ import SwiftUI
         
         Task {
             for event in events {
-                await self.channel.send(event)
+                await self.broadcaster.broadcast(event)
             }
         }
     }
     
-    // Each call returns a NEW independent iterator
-    nonisolated func subscribe() -> AsyncChannel<MIDIEvent> {
-        channel
+    nonisolated func subscribe() -> AsyncStream<MIDIEvent> {
+        let broadcaster = self.broadcaster
+        return AsyncStream<MIDIEvent> { continuation in
+            Task {
+                let subscriberId = await broadcaster.addSubscriber(continuation)
+
+                continuation.onTermination = { _ in
+                    Task {
+                        await broadcaster.removeSubscriber(withId: subscriberId)
+                    }
+                }
+            }
+        }
     }
 
     deinit {
-        channel.finish()
+        let broadcaster = self.broadcaster
+        Task.detached {
+            await broadcaster.finishAll()
+        }
         print("MIDIHelper deallocated")
     }
     

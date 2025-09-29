@@ -7,6 +7,7 @@
 
 import Foundation
 import MIDIKitIO
+import AsyncAlgorithms
 
 class SequencerInput {
     private let midi: MIDIHelper

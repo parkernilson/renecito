@@ -15,15 +15,13 @@ class Sequencer {
     
     init(midi: MIDIHelper) {
         self.midi = midi
-        // TODO: refactor to use protocols and factory methods
         self.xChannelTriggerOutput = SequencerOutput.xChannelTriggerOutput(midi: midi)
         self.xChannelValueOutput = SequencerOutput.xChannelValueOutput(midi: midi)
     }
     
     func triggerXClock() async {
-        // TODO: implement sequencer state machine
         do {
-            try await self.output1.sendTrigger()
+            try await self.xChannelTriggerOutput.sendTrigger()
         } catch {
             print("Error sending trigger to output1:", error.localizedDescription)
         }

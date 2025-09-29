@@ -8,10 +8,6 @@
 import Foundation
 import MIDIKitIO
 
-// TODO: I think I should have a SequencerOutput protocol
-// then extensions for TriggerOutput, ValueOutput
-// then static factory functions for xChannelValueOutput, xChannelTriggerOutput, etc.
-
 class SequencerOutput {
     private var midi: MIDIHelper
     private var channel: UInt4
@@ -56,8 +52,36 @@ class SequencerOutput {
     }
 }
 
+class SequencerTriggerOutput {
+    private var output: SequencerOutput
+    
+    init(midi: MIDIHelper, channel: UInt4) {
+        self.output = SequencerOutput(midi: midi, channel: channel)
+    }
+    
+    func sendTrigger() async throws {
+        try await self.output.sendTrigger()
+    }
+}
+
+class SequencerValueOutput {
+    private var output: SequencerOutput
+    
+    init(midi: MIDIHelper, channel: UInt4) {
+        self.output = SequencerOutput(midi: midi, channel: channel)
+    }
+    
+    func sendValue(value: Double) async throws {
+        try await self.output.sendValue(value: value)
+    }
+}
+
 extension SequencerOutput {
-    static func xChannelValueOutput(midi: MIDIHelper) -> SequencerOutput {
-        SequencerOutput(midi: midi, channel: 0)
+    static func xChannelTriggerOutput(midi: MIDIHelper) -> SequencerTriggerOutput {
+        SequencerTriggerOutput(midi: midi, channel: 0)
+    }
+    
+    static func xChannelValueOutput(midi: MIDIHelper) -> SequencerValueOutput {
+        SequencerValueOutput(midi: midi, channel: 1)
     }
 }

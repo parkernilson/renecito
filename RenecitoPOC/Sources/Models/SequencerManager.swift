@@ -24,6 +24,7 @@ class SequencerManager {
     func start() {
         xClockInput = makeXClockInput()
         yClockInput = makeYClockInput()
+        
         listenersTask = Task {
             await withTaskGroup(of: Void.self) { [weak self] group in
                 for input in [self?.xClockInput, self?.yClockInput] {
@@ -63,7 +64,7 @@ extension SequencerManager {
             filter: { event in
                 event.channel == 0 && event.isChannelVoice(ofType: .noteOn)
             },
-            handler: { [weak self] _ in
+            handler: { [weak self] event in
                 await self?.seq.triggerXClock()
             }
         )
