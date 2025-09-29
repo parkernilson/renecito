@@ -16,7 +16,7 @@ class Output1 : SequencerOutput {
     }
     
     func sendTrigger() async throws {
-        print("Sending noteOn event as a result of trigger")
+        print("Output1: Sending noteOn event as a result of trigger")
         try self.midi.midiOutputConnection?.send(
             event: .noteOn(
                 60,
@@ -24,5 +24,9 @@ class Output1 : SequencerOutput {
                 channel: 0
             )
         )
+    }
+
+    deinit {
+        print("Output1: deallocated")
     }
 }

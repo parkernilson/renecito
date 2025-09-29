@@ -24,4 +24,8 @@ class Sequencer {
             print("Error sending trigger to output1:", error.localizedDescription)
         }
     }
+
+    deinit {
+        print("Sequencer deallocated")
+    }
 }

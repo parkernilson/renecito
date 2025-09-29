@@ -23,17 +23,28 @@ class SequencerManager {
         listenersTask = Task {
             await withTaskGroup(of: Void.self) { group in
                 group.addTask { [weak self] in
-                    await self?.input1.listen()
+                    guard let self = self else { return }
+                    await self.input1.listen()
                 }
 
                 // Wait for all tasks to complete (or be cancelled)
-                for await _ in group {}
+                for await _ in group {
+                    if Task.isCancelled {
+                        break
+                    }
+                }
             }
         }
     }
 
     func stop() {
+        input1.stop()
         listenersTask?.cancel()
         listenersTask = nil
+    }
+
+    deinit {
+        stop()
+        print("SequencerManager deallocated")
     }
 }
