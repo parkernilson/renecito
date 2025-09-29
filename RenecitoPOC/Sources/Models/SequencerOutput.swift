@@ -41,7 +41,7 @@ class SequencerOutput {
                 channel: self.channel
             )
         )
-        try await Task.sleep(for: .milliseconds(10))
+        try await Task.sleep(for: .milliseconds(100))
         try self.midi.midiOutputConnection?.send(
             event: .noteOff(
                 60,
@@ -82,6 +82,6 @@ extension SequencerOutput {
     }
     
     static func xChannelValueOutput(midi: MIDIHelper) -> SequencerValueOutput {
-        SequencerValueOutput(midi: midi, channel: 1)
+        SequencerValueOutput(midi: midi, channel: 0)
     }
 }
