@@ -7,4 +7,6 @@
 
 import Foundation
 
-protocol SequencerOutput { }
+protocol SequencerOutput {
+    func sendTrigger() async throws
+}

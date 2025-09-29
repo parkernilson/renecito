@@ -1,5 +1,5 @@
 //
-//  SequencerInput.swift
+//  MIDIInput.swift
 //  RenecitoPOC
 //
 //  Created by Parker Nilson on 9/28/25.
@@ -9,29 +9,37 @@ import Foundation
 import MIDIKitIO
 
 class SequencerInput {
-    var listenTask: Task<Void, Never>?
-    var midiEventFilter: (MIDIEvent) -> Bool
-    
-    fileprivate init(midiEventFilter: @escaping (MIDIEvent) -> Bool) {
-        self.midiEventFilter = midiEventFilter
+    private let midi: MIDIHelper
+    private let filter: @Sendable (MIDIEvent) -> Bool
+    private let handler: @Sendable (MIDIEvent) async -> Void
+    private var listenTask: Task<Void, Never>?
+
+    init(
+        midi: MIDIHelper,
+        filter: @escaping @Sendable (MIDIEvent) -> Bool,
+        handler: @escaping @Sendable (MIDIEvent) async -> Void
+    ) {
+        self.midi = midi
+        self.filter = filter
+        self.handler = handler
     }
-    
-    func listenInternal(handler: @escaping (MIDIEvent) -> Void) async {
+
+    func listen() async {
         listenTask = Task {
-            for await _ in self.midi.subscribe().filter(self.midiEventFilter) { event in
-                handler(event)
+            for await event in self.midi.subscribe().filter(self.filter) {
+                await self.handler(event)
             }
         }
+        await listenTask?.value
     }
-    
+
     func stop() {
         listenTask?.cancel()
         listenTask = nil
     }
-    
+
     deinit {
         stop()
-        print("Input1 deallocated")
+        print("MIDIInput deallocated")
     }
 }
-

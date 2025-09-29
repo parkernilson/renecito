@@ -8,13 +8,13 @@
 import Foundation
 import MIDIKitIO
 
-class Output1 : SequencerOutput {
+class Output1: SequencerOutput {
     private var midi: MIDIHelper
-    
+
     init(midi: MIDIHelper) {
         self.midi = midi
     }
-    
+
     func sendTrigger() async throws {
         print("Output1: Sending noteOn event as a result of trigger")
         try self.midi.midiOutputConnection?.send(
@@ -23,6 +23,10 @@ class Output1 : SequencerOutput {
                 velocity: .midi1(UInt7.random(in: 20...127)),
                 channel: 0
             )
+        )
+        try await Task.sleep(for: .milliseconds(20))
+        try self.midi.midiOutputConnection?.send(
+            event: .noteOff(60, velocity: .unitInterval(1), channel: 0)
         )
     }
 

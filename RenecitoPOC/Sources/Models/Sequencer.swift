@@ -17,12 +17,16 @@ class Sequencer {
         self.output1 = Output1(midi: midi)
     }
     
-    func triggerInput1() async {
+    func triggerXClock() async {
         do {
             try await self.output1.sendTrigger()
         } catch {
             print("Error sending trigger to output1:", error.localizedDescription)
         }
+    }
+    
+    func triggerYClock() async {
+        print("Y Clock Triggered")
     }
 
     deinit {

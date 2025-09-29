@@ -6,25 +6,30 @@
 //
 
 import Foundation
+import MIDIKitIO
 
 class SequencerManager {
     private var midi: MIDIHelper
     private var seq: Sequencer
-    private var input1: Input1
     private var listenersTask: Task<Void, Never>?
 
+    private var xClockInput: SequencerInput?
+    private var yClockInput: SequencerInput?
+    
     init(midi: MIDIHelper) {
         self.midi = midi
         self.seq = Sequencer(midi: midi)
-        self.input1 = Input1(midi: midi, sequencer: self.seq)
     }
 
     func start() {
+        xClockInput = makeXClockInput()
+        yClockInput = makeYClockInput()
         listenersTask = Task {
-            await withTaskGroup(of: Void.self) { group in
-                group.addTask { [weak self] in
-                    guard let self = self else { return }
-                    await self.input1.listen()
+            await withTaskGroup(of: Void.self) { [weak self] group in
+                for input in [self?.xClockInput, self?.yClockInput] {
+                    group.addTask {
+                        await input?.listen()
+                    }
                 }
 
                 // Wait for all tasks to complete (or be cancelled)
@@ -37,9 +42,10 @@ class SequencerManager {
             }
         }
     }
-
+    
     func stop() {
-        input1.stop()
+        xClockInput?.stop()
+        yClockInput?.stop()
         listenersTask?.cancel()
         listenersTask = nil
     }
@@ -47,5 +53,31 @@ class SequencerManager {
     deinit {
         stop()
         print("SequencerManager deallocated")
+    }
+}
+
+extension SequencerManager {
+    func makeXClockInput() -> SequencerInput {
+        return SequencerInput(
+            midi: midi,
+            filter: { event in
+                event.channel == 0 && event.isChannelVoice(ofType: .noteOn)
+            },
+            handler: { [weak self] _ in
+                await self?.seq.triggerXClock()
+            }
+        )
+    }
+    
+    func makeYClockInput() -> SequencerInput {
+        return SequencerInput(
+            midi: midi,
+            filter: { event in
+                event.channel == 1 && event.isChannelVoice(ofType: .noteOn)
+            },
+            handler: { [weak self] _ in
+                await self?.seq.triggerYClock()
+            }
+        )
     }
 }
