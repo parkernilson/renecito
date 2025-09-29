@@ -6,9 +6,12 @@ import SwiftUI
 /// SwiftUI view state directly. Therefore, we need a helper class marked with `@Observable`
 /// which contains properties that SwiftUI can use to update views.
 actor MIDIBroadcaster {
-    private var continuations: [ObjectIdentifier: AsyncStream<MIDIEvent>.Continuation] = [:]
+    private var continuations:
+        [ObjectIdentifier: AsyncStream<MIDIEvent>.Continuation] = [:]
 
-    func addSubscriber(_ continuation: AsyncStream<MIDIEvent>.Continuation) -> ObjectIdentifier {
+    func addSubscriber(_ continuation: AsyncStream<MIDIEvent>.Continuation)
+        -> ObjectIdentifier
+    {
         let id = ObjectIdentifier(continuation as AnyObject)
         continuations[id] = continuation
         return id
@@ -40,9 +43,9 @@ actor MIDIBroadcaster {
     public private(set) var receivedEvents: [MIDIEvent] = []
 
     public var filterActiveSensingAndClock = false
-    
-    public init() { }
-    
+
+    public init() {}
+
     public func setup(midiManager: ObservableMIDIManager) {
         self.midiManager = midiManager
 
@@ -59,7 +62,42 @@ actor MIDIBroadcaster {
                 tag: Tags.midiIn,
                 receiver: .events { [weak self] events, timeStamp, source in
                     Task { @MainActor in
-                        self?.received(events: events)
+                        if events.contains(where: {
+                            $0.isChannelVoice(ofType: .noteOn)
+                        }) {
+                            let outputConnection = self?.midiOutputConnection
+                            await withTaskGroup(of: Void.self) { group in
+                                group.addTask {
+                                    try? outputConnection?.send(
+                                        event: .noteOn(
+                                            60,
+                                            velocity: .unitInterval(1),
+                                            channel: 0
+                                        )
+                                    )
+                                    try? await Task.sleep(
+                                        for: .milliseconds(100)
+                                    )
+                                    try? outputConnection?.send(
+                                        event: .noteOff(
+                                            60,
+                                            velocity: .unitInterval(1),
+                                            channel: 0
+                                        )
+                                    )
+                                }
+
+                                group.addTask {
+                                    try? outputConnection?.send(
+                                        event: .cc(
+                                            1,
+                                            value: .unitInterval(Double.random(in: 0...1)),
+                                            channel: 0
+                                        )
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             )
@@ -69,19 +107,25 @@ actor MIDIBroadcaster {
                 tag: Tags.midiOut
             )
         } catch {
-            print("Error creating MIDI connections:", error.localizedDescription)
+            print(
+                "Error creating MIDI connections:",
+                error.localizedDescription
+            )
         }
     }
-    
+
     // MARK: Common Event Receiver
-    
+
     private func received(events: [MIDIEvent]) {
-        let events = filterActiveSensingAndClock
-            ? events.filter(sysRealTime: .dropTypes([.activeSensing, .timingClock]))
+        let events =
+            filterActiveSensingAndClock
+            ? events.filter(
+                sysRealTime: .dropTypes([.activeSensing, .timingClock])
+            )
             : events
-        
+
         print("Received events: \(events)")
-        
+
         // must update properties that result in UI changes on main thread
         Task { @MainActor in
             self.receivedEvents.append(contentsOf: events)
@@ -92,14 +136,14 @@ actor MIDIBroadcaster {
                 self.receivedEvents.removeFirst(excess)
             }
         }
-        
+
         Task {
             for event in events {
                 await self.broadcaster.broadcast(event)
             }
         }
     }
-    
+
     nonisolated func subscribe() -> AsyncStream<MIDIEvent> {
         let broadcaster = self.broadcaster
         return AsyncStream<MIDIEvent> { continuation in
@@ -122,15 +166,15 @@ actor MIDIBroadcaster {
         }
         print("MIDIHelper deallocated")
     }
-    
+
     // MARK: - MIDI Input Connection
-    
+
     public var midiInputConnection: MIDIInputConnection? {
         midiManager?.managedInputConnections[Tags.midiIn]
     }
-    
+
     // MARK: - MIDI Output Connection
-    
+
     public var midiOutputConnection: MIDIOutputConnection? {
         midiManager?.managedOutputConnections[Tags.midiOut]
     }
@@ -143,17 +187,16 @@ extension MIDIHelper {
         static let midiIn = "SelectedInputConnection"
         static let midiOut = "SelectedOutputConnection"
     }
-    
+
     enum PrefKeys {
         static let midiInID = "SelectedMIDIInID"
         static let midiInDisplayName = "SelectedMIDIInDisplayName"
-        
+
         static let midiOutID = "SelectedMIDIOutID"
         static let midiOutDisplayName = "SelectedMIDIOutDisplayName"
     }
-    
+
     enum Defaults {
         static let selectedDisplayName = "None"
     }
 }
-
