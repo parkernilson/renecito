@@ -11,23 +11,12 @@ import MIDIKitIO
 @Observable
 class Sequencer {
     private var midi: MIDIHelper
-    private var xChannelTriggerOutput: SequencerTriggerOutput
-    private var xChannelValueOutput: SequencerValueOutput
     private var midiListenerID: UUID?
-
-    var xChannelValues: [[Double]] = (0..<4).map { _ in
-        (0..<4).map { _ in Double.random(in: 0...1) }
-    }
-    var xChannelPosition: (x: Int, y: Int) = (0, 0)
+    private var state: SequencerState
 
     init(midi: MIDIHelper) {
         self.midi = midi
-        self.xChannelTriggerOutput = SequencerOutput.xChannelTriggerOutput(
-            midi: midi
-        )
-        self.xChannelValueOutput = SequencerOutput.xChannelValueOutput(
-            midi: midi
-        )
+        self.state = .init(midi: midi)
     }
 
     func start() {
@@ -56,36 +45,10 @@ class Sequencer {
     }
 
     func triggerXClock() async {
-        xChannelPosition = (
-            x: (xChannelPosition.x + 1) % 4,
-            y: xChannelPosition.x == 3
-                ? (xChannelPosition.y + 1) % 4 : xChannelPosition.y
-        )
-
-        print("X Clock Triggered")
-        print("X Position: \(self.xChannelPosition)")
-
-        do {
-            print(
-                "Sending value: \(xChannelValues[xChannelPosition.x][xChannelPosition.y])"
-            )
-            await withTaskGroup(of: Void.self) { group in
-                group.addTask {
-                    try? await self.xChannelValueOutput.sendValueSmooth(
-                        value: self.xChannelValues[self.xChannelPosition.x][
-                            self.xChannelPosition.y
-                        ],
-                        duration: 0.05
-                    )
-                }
-                group.addTask {
-                    try? await self.xChannelTriggerOutput.sendTrigger()
-                }
-            }
-        }
+        await self.state.triggerXClock()
     }
 
     func triggerYClock() async {
-        print("Y Clock Triggered")
+        await self.state.triggerYClock()
     }
 }
