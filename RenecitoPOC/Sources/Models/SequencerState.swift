@@ -9,7 +9,7 @@ import Foundation
 
 @Observable
 class SequencerState {
-    private var xChannel: SequencerChannel
+    public var xChannel: SequencerChannel
     private var yChannel: SequencerChannel
     
     init(midi: MIDIHelper) {
@@ -29,5 +29,9 @@ class SequencerState {
     
     func triggerYClock() async {
         await self.yChannel.triggerClock()
+    }
+
+    func updateXChannelGridValue(x: Int, y: Int, value: Double) {
+        xChannel.updateGridValue(x: x, y: y, value: value)
     }
 }

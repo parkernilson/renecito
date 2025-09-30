@@ -44,15 +44,7 @@ struct ContentView: View {
     }
     
     private var sequencerView: some View {
-        Text(
-            """
-            This is where the Sequencer will go
-            """
-        )
-        .multilineTextAlignment(.center)
-        .navigationTitle("Sequencer")
-        .navigationBarTitleDisplayMode(.inline)
-        .frame(maxWidth: 600)
+        SequencerView(midi: midiHelper)
     }
     
     private var endpointSelectionSection: some View {
