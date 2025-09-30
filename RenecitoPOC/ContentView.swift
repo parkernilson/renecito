@@ -22,40 +22,35 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             Form {
-                infoSection
+                navigationSection
                 
                 endpointSelectionSection
                 
-//                eventLogSection
             }
-            .navigationBarTitle("Endpoint Pickers")
+            .navigationBarTitle("Renecito POC")
             
-            infoView
+            sequencerView
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .padding()
     }
     
-    private var infoSection: some View {
+    private var navigationSection: some View {
         Section() {
-            NavigationLink("Info") {
-                infoView
+            NavigationLink("Sequencer") {
+                sequencerView
             }
         }
     }
     
-    private var infoView: some View {
+    private var sequencerView: some View {
         Text(
             """
-            This example demonstrates maintaining menus with MIDI endpoints in the system, allowing a single selection for each menu.
-            
-            Refer to this example's README.md file for important information.
-            
-            For testing purposes, try creating virtual endpoints, selecting them as MIDI In and MIDI Out, then destroying them. They appear as missing but their selection is retained. Then create them again, and they will appear normally once again and connection will resume. They are remembered even if you quit the app.
+            This is where the Sequencer will go
             """
         )
         .multilineTextAlignment(.center)
-        .navigationTitle("Info")
+        .navigationTitle("Sequencer")
         .navigationBarTitleDisplayMode(.inline)
         .frame(maxWidth: 600)
     }
