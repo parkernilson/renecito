@@ -15,11 +15,13 @@ class SequencerState {
     init(midi: MIDIHelper) {
         self.xChannel = SequencerChannel(
             triggerOutput: SequencerTriggerOutput.xChannelTriggerOutput(midi: midi),
-            valueOutput: SequencerValueOutput.xChannelValueOutput(midi: midi)
+            valueOutput: SequencerValueOutput.xChannelValueOutput(midi: midi),
+            noteOutput: SequencerNoteOutput.xChannelNoteOutput(midi: midi)
         )
         self.yChannel = SequencerChannel(
             triggerOutput: SequencerTriggerOutput.yChannelTriggerOutput(midi: midi),
-            valueOutput: SequencerValueOutput.yChannelValueOutput(midi: midi)
+            valueOutput: SequencerValueOutput.yChannelValueOutput(midi: midi),
+            noteOutput: SequencerNoteOutput.yChannelNoteOutput(midi: midi)
         )
     }
     

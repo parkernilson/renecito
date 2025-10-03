@@ -31,3 +31,22 @@ extension UInt7 {
         return UInt7(UInt.random(in: lb ... ub))
     }
 }
+
+extension Array where Element: Comparable {
+    // Find the insertion point for a value to maintain sorted order
+    func bisectLeft(_ value: Element) -> Int {
+        var low = 0
+        var high = count
+        
+        while low < high {
+            let mid = low + (high - low) / 2
+            if self[mid] < value {
+                low = mid + 1
+            } else {
+                high = mid
+            }
+        }
+        
+        return low
+    }
+}
