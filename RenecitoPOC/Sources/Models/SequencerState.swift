@@ -54,4 +54,12 @@ class SequencerState {
     func updateYChannelAccessValue(x: Int, y: Int, value: Bool) {
         yChannel.updateAccessValue(x: x, y: y, value: value)
     }
+
+    func updateXChannelQuantizer(_ quantizer: Quantizer) {
+        xChannel.quantizer = quantizer
+    }
+
+    func updateYChannelQuantizer(_ quantizer: Quantizer) {
+        yChannel.quantizer = quantizer
+    }
 }

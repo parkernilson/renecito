@@ -20,6 +20,8 @@ class SequencerChannel {
     public var accessGrid: [[Bool]] = (0..<4).map { _ in (0..<4).map { _ in true } }
     public var muteGrid: [[Bool]] = (0..<4).map { _ in (0..<4).map { _ in false } }
 
+    public var quantizer: Quantizer = .chromatic
+
     init(triggerOutput: SequencerTriggerOutput, valueOutput: SequencerValueOutput) {
         self.triggerOutput = triggerOutput
         self.valueOutput = valueOutput
@@ -29,10 +31,19 @@ class SequencerChannel {
         handleStepEvent()
 
         let isMuted = muteGrid[position.x][position.y]
-        let currentValue = valueGrid[position.x][position.y]
+        let rawValue = valueGrid[position.x][position.y]
+
+        // Scale from 0.0-1.0 to 0.0-5.0V
+        let scaledValue = rawValue * 5.0
+
+        // Apply quantization
+        let quantizedValue = quantizer.quantize(scaledValue)
+
+        // Convert back to 0.0-1.0 range for MIDI CC (0-127 maps to 0.0-5.0V)
+        let outputValue = quantizedValue / 5.0
 
         print("📍 Position: (\(position.x), \(position.y))")
-        print("🎚️ Sending value: \(String(format: "%.3f", currentValue))")
+        print("🎚️ Raw: \(String(format: "%.3f", rawValue)) -> Scaled: \(String(format: "%.3f", scaledValue))V -> Quantized: \(String(format: "%.3f", quantizedValue))V -> Output: \(String(format: "%.3f", outputValue))")
 
         if !isMuted {
             print("🔔 Trigger sent")
@@ -43,7 +54,7 @@ class SequencerChannel {
         do {
             await withTaskGroup(of: Void.self) { group in
                 group.addTask {
-                    try? await self.valueOutput.sendValue(value: currentValue)
+                    try? await self.valueOutput.sendValue(value: outputValue)
                 }
                 if !isMuted {
                     group.addTask {

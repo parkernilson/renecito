@@ -26,6 +26,42 @@ struct SequencerView: View {
         case access
     }
 
+    enum QuantizerPreset: String, CaseIterable, Identifiable {
+        case none = "None"
+        case chromatic = "Chromatic"
+        case major = "Major"
+        case minor = "Minor"
+        case majorPentatonic = "Maj Pent"
+        case minorPentatonic = "Min Pent"
+        case dorian = "Dorian"
+        case phrygian = "Phrygian"
+        case lydian = "Lydian"
+        case mixolydian = "Mixolydian"
+        case locrian = "Locrian"
+        case harmonicMinor = "Harm Min"
+        case wholeTone = "Whole Tone"
+
+        var id: String { rawValue }
+
+        var quantizer: Quantizer {
+            switch self {
+            case .none: return .none
+            case .chromatic: return .chromatic
+            case .major: return .major
+            case .minor: return .minor
+            case .majorPentatonic: return .majorPentatonic
+            case .minorPentatonic: return .minorPentatonic
+            case .dorian: return .dorian
+            case .phrygian: return .phrygian
+            case .lydian: return .lydian
+            case .mixolydian: return .mixolydian
+            case .locrian: return .locrian
+            case .harmonicMinor: return .harmonicMinor
+            case .wholeTone: return .wholeTone
+            }
+        }
+    }
+
     private var currentChannel: SequencerChannel {
         switch selectedChannel {
         case .x:
@@ -37,6 +73,25 @@ struct SequencerView: View {
 
     private var gridColumns: [GridItem] {
         Array(repeating: GridItem(.flexible()), count: 4)
+    }
+
+    private var quantizerBinding: Binding<QuantizerPreset> {
+        Binding(
+            get: {
+                let currentQuantizer = currentChannel.quantizer
+                return QuantizerPreset.allCases.first(where: {
+                    $0.quantizer.allowedSemitones == currentQuantizer.allowedSemitones
+                }) ?? .chromatic
+            },
+            set: { newPreset in
+                switch selectedChannel {
+                case .x:
+                    sequencerState.updateXChannelQuantizer(newPreset.quantizer)
+                case .y:
+                    sequencerState.updateYChannelQuantizer(newPreset.quantizer)
+                }
+            }
+        )
     }
 
     private func sliderView(for row: Int, col: Int) -> some View {
@@ -140,6 +195,14 @@ struct SequencerView: View {
                     Text("Y").tag(ChannelSelection.y)
                 }
                 .pickerStyle(.segmented)
+                .padding(.horizontal)
+
+                Picker("Quantizer", selection: quantizerBinding) {
+                    ForEach(QuantizerPreset.allCases) { preset in
+                        Text(preset.rawValue).tag(preset)
+                    }
+                }
+                .pickerStyle(.menu)
                 .padding(.horizontal)
 
                 if isLandscape {
