@@ -38,4 +38,20 @@ class SequencerState {
     func updateYChannelGridValue(x: Int, y: Int, value: Double) {
         yChannel.updateGridValue(x: x, y: y, value: value)
     }
+
+    func updateXChannelMuteValue(x: Int, y: Int, value: Bool) {
+        xChannel.updateMuteValue(x: x, y: y, value: value)
+    }
+
+    func updateYChannelMuteValue(x: Int, y: Int, value: Bool) {
+        yChannel.updateMuteValue(x: x, y: y, value: value)
+    }
+
+    func updateXChannelAccessValue(x: Int, y: Int, value: Bool) {
+        xChannel.updateAccessValue(x: x, y: y, value: value)
+    }
+
+    func updateYChannelAccessValue(x: Int, y: Int, value: Bool) {
+        yChannel.updateAccessValue(x: x, y: y, value: value)
+    }
 }

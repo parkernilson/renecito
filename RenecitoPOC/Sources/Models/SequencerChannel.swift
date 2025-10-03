@@ -29,15 +29,21 @@ class SequencerChannel {
         handleStepEvent()
 
         let isMuted = muteGrid[position.x][position.y]
+        let currentValue = valueGrid[position.x][position.y]
+
+        print("📍 Position: (\(position.x), \(position.y))")
+        print("🎚️ Sending value: \(String(format: "%.3f", currentValue))")
+
+        if !isMuted {
+            print("🔔 Trigger sent")
+        } else {
+            print("🔇 Trigger muted")
+        }
 
         do {
             await withTaskGroup(of: Void.self) { group in
                 group.addTask {
-                    try? await self.valueOutput.sendValue(
-                        value: self.valueGrid[self.position.x][
-                            self.position.y
-                        ]
-                    )
+                    try? await self.valueOutput.sendValue(value: currentValue)
                 }
                 if !isMuted {
                     group.addTask {
@@ -76,6 +82,16 @@ class SequencerChannel {
     func updateGridValue(x: Int, y: Int, value: Double) {
         guard x >= 0 && x < 4 && y >= 0 && y < 4 else { return }
         valueGrid[x][y] = value
+    }
+
+    func updateMuteValue(x: Int, y: Int, value: Bool) {
+        guard x >= 0 && x < 4 && y >= 0 && y < 4 else { return }
+        muteGrid[x][y] = value
+    }
+
+    func updateAccessValue(x: Int, y: Int, value: Bool) {
+        guard x >= 0 && x < 4 && y >= 0 && y < 4 else { return }
+        accessGrid[x][y] = value
     }
 
 }

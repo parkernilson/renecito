@@ -10,6 +10,7 @@ import SwiftUI
 struct SequencerView: View {
     @State private var sequencerState: SequencerState
     @State private var selectedChannel: ChannelSelection = .x
+    @State private var selectedSecondaryGrid: SecondaryGridMode = .mute
 
     init(midi: MIDIHelper) {
         _sequencerState = State(initialValue: SequencerState(midi: midi))
@@ -18,6 +19,11 @@ struct SequencerView: View {
     enum ChannelSelection {
         case x
         case y
+    }
+
+    enum SecondaryGridMode {
+        case mute
+        case access
     }
 
     private var currentChannel: SequencerChannel {
@@ -74,18 +80,108 @@ struct SequencerView: View {
         )
     }
 
-    var body: some View {
-        VStack(spacing: 20) {
-            Text("\(selectedChannel == .x ? "X" : "Y") Channel Sequencer")
-                .font(.title)
-                .padding()
-
-            Picker("Channel", selection: $selectedChannel) {
-                Text("X").tag(ChannelSelection.x)
-                Text("Y").tag(ChannelSelection.y)
+    private func toggleView(for row: Int, col: Int, mode: SecondaryGridMode) -> some View {
+        let binding = Binding(
+            get: {
+                switch mode {
+                case .mute:
+                    return currentChannel.muteGrid[col][row]
+                case .access:
+                    return currentChannel.accessGrid[col][row]
+                }
+            },
+            set: { newValue in
+                switch (selectedChannel, mode) {
+                case (.x, .mute):
+                    sequencerState.updateXChannelMuteValue(x: col, y: row, value: newValue)
+                case (.x, .access):
+                    sequencerState.updateXChannelAccessValue(x: col, y: row, value: newValue)
+                case (.y, .mute):
+                    sequencerState.updateYChannelMuteValue(x: col, y: row, value: newValue)
+                case (.y, .access):
+                    sequencerState.updateYChannelAccessValue(x: col, y: row, value: newValue)
+                }
             }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
+        )
+
+        let isActive =
+            currentChannel.position.x == col
+            && currentChannel.position.y == row
+
+        return Button(action: {
+            binding.wrappedValue.toggle()
+        }) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(binding.wrappedValue ? Color.blue : Color.gray.opacity(0.3))
+                    .frame(height: 50)
+
+                if isActive {
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.blue, lineWidth: 3)
+                        .frame(height: 50)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    var body: some View {
+        GeometryReader { geometry in
+            let isLandscape = geometry.size.width > geometry.size.height
+
+            VStack(spacing: 20) {
+                Text("\(selectedChannel == .x ? "X" : "Y") Channel Sequencer")
+                    .font(.title)
+                    .padding()
+
+                Picker("Channel", selection: $selectedChannel) {
+                    Text("X").tag(ChannelSelection.x)
+                    Text("Y").tag(ChannelSelection.y)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+
+                if isLandscape {
+                    HStack(spacing: 20) {
+                        valueGridView
+                        secondaryGridView
+                    }
+                    .padding()
+                } else {
+                    VStack(spacing: 20) {
+                        valueGridView
+                        secondaryGridView
+                    }
+                    .padding()
+                }
+
+                HStack(spacing: 20) {
+                    Button("Trigger X Clock") {
+                        Task {
+                            await sequencerState.triggerXClock()
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button("Trigger Y Clock") {
+                        Task {
+                            await sequencerState.triggerYClock()
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .padding()
+            }
+            .navigationTitle("Sequencer")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private var valueGridView: some View {
+        VStack(spacing: 8) {
+            Text("Values")
+                .font(.headline)
 
             LazyVGrid(
                 columns: gridColumns,
@@ -97,28 +193,28 @@ struct SequencerView: View {
                     sliderView(for: row, col: col)
                 }
             }
-            .padding()
-
-            HStack(spacing: 20) {
-                Button("Trigger X Clock") {
-                    Task {
-                        await sequencerState.triggerXClock()
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-
-                Button("Trigger Y Clock") {
-                    Task {
-                        await sequencerState.triggerYClock()
-                    }
-                }
-                .buttonStyle(.bordered)
-            }
-            .padding()
         }
-        .frame(maxWidth: 600)
-        .navigationTitle("Sequencer")
-        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var secondaryGridView: some View {
+        VStack(spacing: 8) {
+            Picker("Mode", selection: $selectedSecondaryGrid) {
+                Text("Mute").tag(SecondaryGridMode.mute)
+                Text("Access").tag(SecondaryGridMode.access)
+            }
+            .pickerStyle(.segmented)
+
+            LazyVGrid(
+                columns: gridColumns,
+                spacing: 8
+            ) {
+                ForEach(0..<16, id: \.self) { index in
+                    let row = index / 4
+                    let col = index % 4
+                    toggleView(for: row, col: col, mode: selectedSecondaryGrid)
+                }
+            }
+        }
     }
 }
 
