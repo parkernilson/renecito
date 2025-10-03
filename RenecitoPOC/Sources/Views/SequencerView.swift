@@ -63,6 +63,24 @@ struct SequencerView: View {
         }
     }
 
+    enum SnakePatternOption: String, CaseIterable, Identifiable {
+        case rows = "Rows"
+        case columns = "Columns"
+        case wideSnake = "Wide Snake"
+        case tallSnake = "Tall Snake"
+
+        var id: String { rawValue }
+
+        var pattern: SnakePattern {
+            switch self {
+            case .rows: return SnakePattern.rows
+            case .columns: return SnakePattern.columns
+            case .wideSnake: return SnakePattern.wideSnake
+            case .tallSnake: return SnakePattern.tallSnake
+            }
+        }
+    }
+
     private var currentChannel: SequencerChannel {
         switch selectedChannel {
         case .x:
@@ -90,6 +108,25 @@ struct SequencerView: View {
                     sequencerState.updateXChannelQuantizer(newPreset.quantizer)
                 case .y:
                     sequencerState.updateYChannelQuantizer(newPreset.quantizer)
+                }
+            }
+        )
+    }
+
+    private var snakePatternBinding: Binding<SnakePatternOption> {
+        Binding(
+            get: {
+                let currentPattern = currentChannel.snakePattern
+                return SnakePatternOption.allCases.first(where: {
+                    $0.pattern.id == currentPattern.id
+                }) ?? .rows
+            },
+            set: { newOption in
+                switch selectedChannel {
+                case .x:
+                    sequencerState.updateXChannelSnakePattern(newOption.pattern)
+                case .y:
+                    sequencerState.updateYChannelSnakePattern(newOption.pattern)
                 }
             }
         )
@@ -226,6 +263,14 @@ struct SequencerView: View {
                     }
                 }
                 .pickerStyle(.menu)
+                .padding(.horizontal)
+
+                Picker("Pattern", selection: snakePatternBinding) {
+                    ForEach(SnakePatternOption.allCases) { option in
+                        Text(option.rawValue).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
                 .padding(.horizontal)
 
                 if isLandscape {

@@ -7,6 +7,7 @@
 
 import Foundation
 
+
 @Observable
 class SequencerChannel {
     private var triggerOutput: SequencerTriggerOutput
@@ -21,6 +22,7 @@ class SequencerChannel {
     public var muteGrid: [[Bool]] = (0..<4).map { _ in (0..<4).map { _ in false } }
 
     public var quantizer: Quantizer = .chromatic
+    public var snakePattern: SnakePattern = .rows
 
     init(triggerOutput: SequencerTriggerOutput, valueOutput: SequencerValueOutput) {
         self.triggerOutput = triggerOutput
@@ -84,10 +86,7 @@ class SequencerChannel {
     }
 
     private func nextPosition(from pos: (x: Int, y: Int)) -> (x: Int, y: Int) {
-        return (
-            x: (pos.x + 1) % 4,
-            y: pos.x == 3 ? (pos.y + 1) % 4 : pos.y
-        )
+        return snakePattern.nextPosition(from: pos)
     }
 
     func updateGridValue(x: Int, y: Int, value: Double) {

@@ -70,4 +70,12 @@ class SequencerState {
     func playYChannelValue(x: Int, y: Int) async {
         await yChannel.playValue(x: x, y: y)
     }
+
+    func updateXChannelSnakePattern(_ pattern: SnakePattern) {
+        xChannel.snakePattern = pattern
+    }
+
+    func updateYChannelSnakePattern(_ pattern: SnakePattern) {
+        yChannel.snakePattern = pattern
+    }
 }
