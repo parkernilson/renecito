@@ -24,6 +24,7 @@ struct SequencerView: View {
     enum SecondaryGridMode {
         case mute
         case access
+        case play
     }
 
     enum QuantizerPreset: String, CaseIterable, Identifiable {
@@ -143,6 +144,8 @@ struct SequencerView: View {
                     return currentChannel.muteGrid[col][row]
                 case .access:
                     return currentChannel.accessGrid[col][row]
+                case .play:
+                    return false // Play mode doesn't need state
                 }
             },
             set: { newValue in
@@ -155,6 +158,8 @@ struct SequencerView: View {
                     sequencerState.updateYChannelMuteValue(x: col, y: row, value: newValue)
                 case (.y, .access):
                     sequencerState.updateYChannelAccessValue(x: col, y: row, value: newValue)
+                case (_, .play):
+                    break // Play mode doesn't toggle state
                 }
             }
         )
@@ -164,17 +169,35 @@ struct SequencerView: View {
             && currentChannel.position.y == row
 
         return Button(action: {
-            binding.wrappedValue.toggle()
+            if mode == .play {
+                // Play the value at this position
+                Task {
+                    switch selectedChannel {
+                    case .x:
+                        await sequencerState.playXChannelValue(x: col, y: row)
+                    case .y:
+                        await sequencerState.playYChannelValue(x: col, y: row)
+                    }
+                }
+            } else {
+                binding.wrappedValue.toggle()
+            }
         }) {
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(binding.wrappedValue ? Color.blue : Color.gray.opacity(0.3))
+                    .fill(mode == .play ? Color.green.opacity(0.3) : (binding.wrappedValue ? Color.blue : Color.gray.opacity(0.3)))
                     .frame(height: 50)
 
                 if isActive {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(Color.blue, lineWidth: 3)
                         .frame(height: 50)
+                }
+
+                if mode == .play {
+                    Text(String(format: "%.2f", currentChannel.valueGrid[col][row]))
+                        .font(.caption)
+                        .foregroundColor(.primary)
                 }
             }
         }
@@ -264,6 +287,7 @@ struct SequencerView: View {
             Picker("Mode", selection: $selectedSecondaryGrid) {
                 Text("Mute").tag(SecondaryGridMode.mute)
                 Text("Access").tag(SecondaryGridMode.access)
+                Text("Play").tag(SecondaryGridMode.play)
             }
             .pickerStyle(.segmented)
 

@@ -62,4 +62,12 @@ class SequencerState {
     func updateYChannelQuantizer(_ quantizer: Quantizer) {
         yChannel.quantizer = quantizer
     }
+
+    func playXChannelValue(x: Int, y: Int) async {
+        await xChannel.playValue(x: x, y: y)
+    }
+
+    func playYChannelValue(x: Int, y: Int) async {
+        await yChannel.playValue(x: x, y: y)
+    }
 }

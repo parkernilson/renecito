@@ -105,4 +105,32 @@ class SequencerChannel {
         accessGrid[x][y] = value
     }
 
+    func playValue(x: Int, y: Int) async {
+        guard x >= 0 && x < 4 && y >= 0 && y < 4 else { return }
+
+        let rawValue = valueGrid[x][y]
+
+        // Scale from 0.0-1.0 to 0.0-5.0V
+        let scaledValue = rawValue * 5.0
+
+        // Apply quantization
+        let quantizedValue = quantizer.quantize(scaledValue)
+
+        // Convert back to 0.0-1.0 range for MIDI CC
+        let outputValue = quantizedValue / 5.0
+
+        print("🎹 Manual play at (\(x), \(y))")
+        print("🎚️ Raw: \(String(format: "%.3f", rawValue)) -> Scaled: \(String(format: "%.3f", scaledValue))V -> Quantized: \(String(format: "%.3f", quantizedValue))V -> Output: \(String(format: "%.3f", outputValue))")
+        print("🔔 Trigger sent")
+
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                try? await self.valueOutput.sendValue(value: outputValue)
+            }
+            group.addTask {
+                try? await self.triggerOutput.sendTrigger()
+            }
+        }
+    }
+
 }
