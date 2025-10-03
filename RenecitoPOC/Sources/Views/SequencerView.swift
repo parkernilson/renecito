@@ -35,7 +35,7 @@ struct SequencerView: View {
 
     private func sliderView(for row: Int, col: Int) -> some View {
         let binding = Binding(
-            get: { currentChannel.grid[col][row] },
+            get: { currentChannel.valueGrid[col][row] },
             set: { newValue in
                 switch selectedChannel {
                 case .x:
@@ -120,5 +120,9 @@ struct SequencerView: View {
         .navigationTitle("Sequencer")
         .navigationBarTitleDisplayMode(.inline)
     }
+}
+
+#Preview {
+    SequencerView(midi: MIDIHelper())
 }
 
