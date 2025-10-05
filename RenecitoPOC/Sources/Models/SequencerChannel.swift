@@ -32,7 +32,7 @@ class SequencerChannel {
         (0..<4).map { _ in false }
     }
 
-    public var quantizer: Quantizer = .none
+    public var quantizer: Quantizer = .semitones
     public var snakePattern: SnakePattern = .rows
 
     init(

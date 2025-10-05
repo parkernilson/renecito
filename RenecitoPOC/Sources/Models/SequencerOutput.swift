@@ -111,13 +111,13 @@ extension SequencerTriggerOutput {
     static func xChannelTriggerOutput(midi: MIDIHelper)
         -> SequencerTriggerOutput
     {
-        SequencerTriggerOutput(midi: midi, channel: 0)
+        SequencerTriggerOutput(midi: midi, channel: 2)
     }
 
     static func yChannelTriggerOutput(midi: MIDIHelper)
         -> SequencerTriggerOutput
     {
-        SequencerTriggerOutput(midi: midi, channel: 1)
+        SequencerTriggerOutput(midi: midi, channel: 3)
     }
 }
 

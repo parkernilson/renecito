@@ -29,36 +29,14 @@ struct SequencerView: View {
 
     enum QuantizerPreset: String, CaseIterable, Identifiable {
         case none = "None"
-        case chromatic = "Chromatic"
-        case major = "Major"
-        case minor = "Minor"
-        case majorPentatonic = "Maj Pent"
-        case minorPentatonic = "Min Pent"
-        case dorian = "Dorian"
-        case phrygian = "Phrygian"
-        case lydian = "Lydian"
-        case mixolydian = "Mixolydian"
-        case locrian = "Locrian"
-        case harmonicMinor = "Harm Min"
-        case wholeTone = "Whole Tone"
-
+        case semitones = "Semitones"
+        
         var id: String { rawValue }
 
         var quantizer: Quantizer {
             switch self {
             case .none: return .none
-            case .chromatic: return .chromatic
-            case .major: return .major
-            case .minor: return .minor
-            case .majorPentatonic: return .majorPentatonic
-            case .minorPentatonic: return .minorPentatonic
-            case .dorian: return .dorian
-            case .phrygian: return .phrygian
-            case .lydian: return .lydian
-            case .mixolydian: return .mixolydian
-            case .locrian: return .locrian
-            case .harmonicMinor: return .harmonicMinor
-            case .wholeTone: return .wholeTone
+            case .semitones: return .semitones
             }
         }
     }
@@ -99,8 +77,8 @@ struct SequencerView: View {
             get: {
                 let currentQuantizer = currentChannel.quantizer
                 return QuantizerPreset.allCases.first(where: {
-                    $0.quantizer.allowedSemitones == currentQuantizer.allowedSemitones
-                }) ?? .chromatic
+                    $0.quantizer == currentQuantizer
+                }) ?? .none
             },
             set: { newPreset in
                 switch selectedChannel {
