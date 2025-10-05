@@ -44,7 +44,7 @@ struct ContentView: View {
     }
     
     private var sequencerView: some View {
-        SequencerView(midi: midiHelper)
+        SequencerView()
     }
     
     private var endpointSelectionSection: some View {

@@ -10,17 +10,20 @@ import MIDIKitIO
 
 @Observable
 class Sequencer {
-    private var midi: MIDIHelper
+    private var midi: MIDIHelper?
     private var midiListenerID: UUID?
-    private var state: SequencerState
-
-    init(midi: MIDIHelper) {
+    public var state: SequencerState?
+    
+    init () { }
+    
+    func setup(midi: MIDIHelper) {
         self.midi = midi
         self.state = .init(midi: midi)
+        start()
     }
 
     func start() {
-        midiListenerID = self.midi.addListener { [weak self] message in
+        midiListenerID = self.midi?.addListener { [weak self] message in
             if message.isChannelVoice(ofType: .noteOn) && message.channel == 0 {
                 Task {
                     await self?.triggerXClock()
@@ -34,6 +37,7 @@ class Sequencer {
     }
     
     func stop() {
+        guard let midi = self.midi else { return }
         if let id = midiListenerID {
             midi.removeListener(id: id)
             midiListenerID = nil
@@ -45,10 +49,10 @@ class Sequencer {
     }
 
     func triggerXClock() async {
-        await self.state.triggerXClock()
+        await self.state?.triggerXClock()
     }
 
     func triggerYClock() async {
-        await self.state.triggerYClock()
+        await self.state?.triggerYClock()
     }
 }

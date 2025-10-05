@@ -8,13 +8,9 @@
 import SwiftUI
 
 struct SequencerView: View {
-    @State private var sequencerState: SequencerState
+    @Environment(Sequencer.self) private var sequencer
     @State private var selectedChannel: ChannelSelection = .x
     @State private var selectedSecondaryGrid: SecondaryGridMode = .mute
-
-    init(midi: MIDIHelper) {
-        _sequencerState = State(initialValue: SequencerState(midi: midi))
-    }
 
     enum ChannelSelection {
         case x
@@ -59,12 +55,12 @@ struct SequencerView: View {
         }
     }
 
-    private var currentChannel: SequencerChannel {
+    private var currentChannel: SequencerChannel? {
         switch selectedChannel {
         case .x:
-            return sequencerState.xChannel
+            return sequencer.state?.xChannel
         case .y:
-            return sequencerState.yChannel
+            return sequencer.state?.yChannel
         }
     }
 
@@ -75,7 +71,7 @@ struct SequencerView: View {
     private var quantizerBinding: Binding<QuantizerPreset> {
         Binding(
             get: {
-                let currentQuantizer = currentChannel.quantizer
+                let currentQuantizer = currentChannel?.quantizer
                 return QuantizerPreset.allCases.first(where: {
                     $0.quantizer == currentQuantizer
                 }) ?? .none
@@ -83,9 +79,9 @@ struct SequencerView: View {
             set: { newPreset in
                 switch selectedChannel {
                 case .x:
-                    sequencerState.updateXChannelQuantizer(newPreset.quantizer)
+                    sequencer.state?.updateXChannelQuantizer(newPreset.quantizer)
                 case .y:
-                    sequencerState.updateYChannelQuantizer(newPreset.quantizer)
+                    sequencer.state?.updateYChannelQuantizer(newPreset.quantizer)
                 }
             }
         )
@@ -94,17 +90,17 @@ struct SequencerView: View {
     private var snakePatternBinding: Binding<SnakePatternOption> {
         Binding(
             get: {
-                let currentPattern = currentChannel.snakePattern
+                let currentPattern = currentChannel?.snakePattern
                 return SnakePatternOption.allCases.first(where: {
-                    $0.pattern.id == currentPattern.id
+                    $0.pattern.id == currentPattern?.id
                 }) ?? .rows
             },
             set: { newOption in
                 switch selectedChannel {
                 case .x:
-                    sequencerState.updateXChannelSnakePattern(newOption.pattern)
+                    sequencer.state?.updateXChannelSnakePattern(newOption.pattern)
                 case .y:
-                    sequencerState.updateYChannelSnakePattern(newOption.pattern)
+                    sequencer.state?.updateYChannelSnakePattern(newOption.pattern)
                 }
             }
         )
@@ -112,17 +108,23 @@ struct SequencerView: View {
 
     private func sliderView(for row: Int, col: Int) -> some View {
         let binding = Binding(
-            get: { currentChannel.valueGrid[col][row] },
+            get: {
+                if currentChannel?.valueGrid[col][row] == nil {
+                    return 0.0
+                } else {
+                    return currentChannel!.valueGrid[col][row]
+                }
+            },
             set: { newValue in
                 switch selectedChannel {
                 case .x:
-                    sequencerState.updateXChannelGridValue(
+                    sequencer.state?.updateXChannelGridValue(
                         x: col,
                         y: row,
                         value: newValue
                     )
                 case .y:
-                    sequencerState.updateYChannelGridValue(
+                    sequencer.state?.updateYChannelGridValue(
                         x: col,
                         y: row,
                         value: newValue
@@ -132,8 +134,8 @@ struct SequencerView: View {
         )
 
         let isActive =
-            currentChannel.position.x == col
-            && currentChannel.position.y == row
+            currentChannel?.position.x == col
+            && currentChannel?.position.y == row
 
         return VStack(spacing: 8) {
             Text(String(format: "%.2f", binding.wrappedValue))
@@ -152,13 +154,14 @@ struct SequencerView: View {
     }
 
     private func toggleView(for row: Int, col: Int, mode: SecondaryGridMode) -> some View {
+        // TODO: Not all squares are toggles in all modes. Need to display different views in different modes
         let binding = Binding(
             get: {
                 switch mode {
                 case .mute:
-                    return currentChannel.muteGrid[col][row]
+                    return currentChannel?.muteGrid[col][row] ?? false
                 case .access:
-                    return currentChannel.accessGrid[col][row]
+                    return currentChannel?.accessGrid[col][row] ?? false
                 case .play:
                     return false // Play mode doesn't need state
                 }
@@ -166,13 +169,13 @@ struct SequencerView: View {
             set: { newValue in
                 switch (selectedChannel, mode) {
                 case (.x, .mute):
-                    sequencerState.updateXChannelMuteValue(x: col, y: row, value: newValue)
+                    sequencer.state?.updateXChannelMuteValue(x: col, y: row, value: newValue)
                 case (.x, .access):
-                    sequencerState.updateXChannelAccessValue(x: col, y: row, value: newValue)
+                    sequencer.state?.updateXChannelAccessValue(x: col, y: row, value: newValue)
                 case (.y, .mute):
-                    sequencerState.updateYChannelMuteValue(x: col, y: row, value: newValue)
+                    sequencer.state?.updateYChannelMuteValue(x: col, y: row, value: newValue)
                 case (.y, .access):
-                    sequencerState.updateYChannelAccessValue(x: col, y: row, value: newValue)
+                    sequencer.state?.updateYChannelAccessValue(x: col, y: row, value: newValue)
                 case (_, .play):
                     break // Play mode doesn't toggle state
                 }
@@ -180,8 +183,8 @@ struct SequencerView: View {
         )
 
         let isActive =
-            currentChannel.position.x == col
-            && currentChannel.position.y == row
+            currentChannel?.position.x == col
+            && currentChannel?.position.y == row
 
         return Button(action: {
             if mode == .play {
@@ -189,9 +192,9 @@ struct SequencerView: View {
                 Task {
                     switch selectedChannel {
                     case .x:
-                        await sequencerState.playXChannelValue(x: col, y: row)
+                        await sequencer.state?.playXChannelValue(x: col, y: row)
                     case .y:
-                        await sequencerState.playYChannelValue(x: col, y: row)
+                        await sequencer.state?.playYChannelValue(x: col, y: row)
                     }
                 }
             } else {
@@ -210,7 +213,7 @@ struct SequencerView: View {
                 }
 
                 if mode == .play {
-                    Text(String(format: "%.2f", currentChannel.valueGrid[col][row]))
+                    Text(String(format: "%.2f", currentChannel?.valueGrid[col][row] ?? 0))
                         .font(.caption)
                         .foregroundColor(.primary)
                 }
@@ -268,14 +271,14 @@ struct SequencerView: View {
                 HStack(spacing: 20) {
                     Button("Trigger X Clock") {
                         Task {
-                            await sequencerState.triggerXClock()
+                            await sequencer.state?.triggerXClock()
                         }
                     }
                     .buttonStyle(.borderedProminent)
 
                     Button("Trigger Y Clock") {
                         Task {
-                            await sequencerState.triggerYClock()
+                            await sequencer.state?.triggerYClock()
                         }
                     }
                     .buttonStyle(.bordered)
@@ -329,6 +332,6 @@ struct SequencerView: View {
 }
 
 #Preview {
-    SequencerView(midi: MIDIHelper())
+    SequencerView().environment(Sequencer.init())
 }
 
